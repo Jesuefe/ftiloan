@@ -14,17 +14,23 @@ export default function AgentDashboard() {
   const { data: stats } = useQuery({
     queryKey: ['agent-stats', profile?.id],
     queryFn: async () => {
-      const { data: agent } = await supabase.from('agents').select('id').eq('user_id', profile.id).single()
+      const { data: agent } = await supabase.from('agents').select('id,zone_id').eq('user_id', profile.id).single()
       if (!agent) return { clients:0, loans:0, pendingPayments:0, recentLoans:[] }
 
-      const [loans, payments] = await Promise.all([
-        supabase.from('loans').select('id,loan_ref,amount,status,created_at,users!loans_user_id_fkey(first_name,last_name)').eq('agent_id', agent.id).order('created_at', { ascending:false }).limit(6),
+      const [loans, payments, zoneClients] = await Promise.all([
+        supabase.from('loans').select('id,loan_ref,amount,status,created_at,user_id,users!loans_user_id_fkey(first_name,last_name)').eq('agent_id', agent.id).order('created_at', { ascending:false }).limit(6),
         supabase.from('payments').select('id',{count:'exact'}).eq('agent_id', agent.id).eq('status','pending'),
+        agent.zone_id
+          ? supabase.from('users').select('id',{count:'exact'}).eq('role','client').eq('zone_id', agent.zone_id)
+          : supabase.from('users').select('id',{count:'exact'}).eq('role','client'),
       ])
 
-      const clientIds = [...new Set(loans.data?.map(l => l.user_id)||[])]
+      // Combine client counts: from loans + from zone
+      const loanClientIds = new Set(loans.data?.map(l => l.user_id)||[])
+      const totalClients  = Math.max(loanClientIds.size, zoneClients.count || 0)
+
       return {
-        clients: clientIds.length,
+        clients: totalClients,
         loans: loans.data?.length || 0,
         pendingPayments: payments.count || 0,
         recentLoans: loans.data || [],
