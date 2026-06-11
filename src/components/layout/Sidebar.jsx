@@ -38,6 +38,7 @@ const navByRole = {
     { label: 'Dashboard',      icon: LayoutDashboard, to: '/manager' },
     { label: 'Loans',          icon: FileText,        to: '/manager/loans' },
     { label: 'Form Approvals', icon: ClipboardList,   to: '/manager/form-approvals' },
+    { label: 'Payment Audit', icon: Shield,          to: '/manager/payment-audit' },
     { label: 'Profile',        icon: Users,           to: '/manager/profile' },
   ],
   agent: [

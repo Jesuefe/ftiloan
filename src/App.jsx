@@ -59,7 +59,8 @@ import ClientProfile    from '@/pages/client/Profile'
 import ManagerDashboard     from '@/pages/manager/Dashboard'
 import ManagerLoans         from '@/pages/manager/Loans'
 import ManagerLoanDetail    from '@/pages/manager/LoanDetail'
-import ManagerFormApprovals from '@/pages/manager/FormApprovals'
+import ManagerFormApprovals  from '@/pages/manager/FormApprovals'
+import ManagerPaymentAudit  from '@/pages/manager/PaymentAudit'
 import ManagerProfile       from '@/pages/manager/Profile'
 
 // Operator
@@ -176,6 +177,7 @@ export default function App() {
               <Route path="loans"            element={<ManagerLoans/>}/>
               <Route path="loans/:id"        element={<ManagerLoanDetail/>}/>
               <Route path="form-approvals"   element={<ManagerFormApprovals/>}/>
+              <Route path="payment-audit"    element={<ManagerPaymentAudit/>}/>
               <Route path="profile"          element={<ManagerProfile/>}/>
             </Route>
 

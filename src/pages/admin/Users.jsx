@@ -45,6 +45,15 @@ export default function AdminUsers() {
     onSuccess: () => qc.invalidateQueries({ queryKey:['admin-users'] }),
   })
 
+  const deleteUser = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('users').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey:['admin-users'] }); setFlash({ type:'success', msg:'User deleted.' }) },
+    onError: e => setFlash({ type:'danger', msg: e.message }),
+  })
+
   const ROLES = ['super_admin','manager','agent','auditor','operator','security_officer','editor']
   const roleColor = r => ({ super_admin:'purple', manager:'blue', agent:'green', auditor:'amber', operator:'gray', security_officer:'red', editor:'gray' }[r] || 'gray')
 
@@ -76,9 +85,14 @@ export default function AdminUsers() {
                 <td className="px-4 py-3"><Badge color={u.status==='active'?'green':'red'}>{u.status}</Badge></td>
                 <td className="px-4 py-3 text-xs text-gray-500">{formatDate(u.created_at)}</td>
                 <td className="px-4 py-3">
+                  <div className="flex gap-1">
                   <Button size="sm" variant="outline" onClick={() => toggleStatus.mutate({ id:u.id, status:u.status })}>
                     {u.status==='active'?'Suspend':'Activate'}
                   </Button>
+                  <Button size="sm" variant="danger" onClick={() => { if(window.confirm('Delete this user?')) deleteUser.mutate(u.id) }}>
+                    Del
+                  </Button>
+                </div>
                 </td>
               </tr>
             ))}

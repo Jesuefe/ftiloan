@@ -1,6 +1,9 @@
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 
+// Roles that can access any page (staff override)
+const STAFF_ROLES = ['super_admin', 'manager', 'agent', 'auditor', 'operator', 'security_officer']
+
 export function ProtectedRoute({ children, roles }) {
   const { profile, loading } = useAuthStore()
 
@@ -14,7 +17,24 @@ export function ProtectedRoute({ children, roles }) {
   )
 
   if (!profile) return <Navigate to="/login" replace/>
-  if (roles && !roles.includes(profile.role)) return <Navigate to="/login" replace/>
+
+  // Staff can access any route (admin reviewing client pages etc)
+  if (STAFF_ROLES.includes(profile.role)) return children
+
+  // For client-only routes, check role
+  if (roles && !roles.includes(profile.role)) {
+    // Redirect to their own dashboard
+    const dashMap = {
+      super_admin: '/admin',
+      manager: '/manager',
+      agent: '/agent',
+      client: '/client',
+      operator: '/operator',
+      auditor: '/auditor',
+      security_officer: '/security',
+    }
+    return <Navigate to={dashMap[profile.role] || '/login'} replace/>
+  }
 
   return children
 }

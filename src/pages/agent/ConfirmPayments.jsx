@@ -18,12 +18,33 @@ export default function AgentConfirmPayments() {
   const { data: payments, isLoading } = useQuery({
     queryKey: ['agent-payments', profile?.id, tab],
     queryFn: async () => {
-      const { data: agent } = await supabase.from('agents').select('id').eq('user_id', profile.id).single()
+      const { data: agent } = await supabase.from('agents').select('id,zone_id').eq('user_id', profile.id).single()
       if (!agent) return []
+
+      // Get all loans for this agent
+      const { data: agentLoans } = await supabase.from('loans')
+        .select('id').eq('agent_id', agent.id)
+      const loanIds = agentLoans?.map(l => l.id) || []
+
+      // Also get loans from zone clients (for client-submitted payments)
+      let zoneLoanIds = []
+      if (agent.zone_id) {
+        const { data: zoneClients } = await supabase.from('users')
+          .select('id').eq('role','client').eq('zone_id', agent.zone_id)
+        if (zoneClients?.length) {
+          const clientIds = zoneClients.map(c => c.id)
+          const { data: zoneLoans } = await supabase.from('loans')
+            .select('id').in('user_id', clientIds)
+          zoneLoanIds = zoneLoans?.map(l => l.id) || []
+        }
+      }
+
+      const allLoanIds = [...new Set([...loanIds, ...zoneLoanIds])]
+      if (!allLoanIds.length) return []
 
       let q = supabase.from('payments')
         .select(`*, loans(loan_ref,amount,outstanding,user_id), users!payments_user_id_fkey(first_name,last_name,phone)`)
-        .eq('agent_id', agent.id)
+        .in('loan_id', allLoanIds)
         .order('created_at', { ascending: false })
 
       if (tab === 'pending')   q = q.eq('status','pending')

@@ -82,6 +82,28 @@ export default function ClientApply() {
           phone: form.guarantor_phone, relationship: form.guarantor_relationship,
         })
       }
+
+      // Generate repayment schedule
+      const scheduleRows = []
+      const startDate = new Date()
+      const dVal = Number(form.duration_value)
+      const dType = form.duration_type
+      if (dType === 'daily') startDate.setDate(startDate.getDate() + 3) // 3 day grace
+      const perInstalment = Math.round(c.totalRepay / dVal * 100) / 100
+      for (let i = 1; i <= dVal; i++) {
+        if (dType === 'daily')   startDate.setDate(startDate.getDate() + 1)
+        else if (dType === 'weekly')   startDate.setDate(startDate.getDate() + 7)
+        else                          startDate.setMonth(startDate.getMonth() + 1)
+        scheduleRows.push({
+          loan_id:    loan.id,
+          due_date:   startDate.toISOString().slice(0,10),
+          amount_due: perInstalment,
+          status:     'pending',
+        })
+      }
+      if (scheduleRows.length > 0) {
+        await supabase.from('repayment_schedule').insert(scheduleRows)
+      }
       return loan
     },
     onSuccess: () => {
