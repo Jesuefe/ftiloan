@@ -28,7 +28,12 @@ import AdminBlacklist from '@/pages/admin/Blacklist'
 import AdminZones     from '@/pages/admin/Zones'
 import AdminManagers  from '@/pages/admin/Managers'
 import AdminOperators from '@/pages/admin/Operators'
-import AdminAuditors  from '@/pages/admin/Auditors'
+import AdminAuditors          from '@/pages/admin/Auditors'
+import AdminRepaymentHistory from '@/pages/admin/RepaymentHistory'
+import AdminSalary          from '@/pages/admin/Salary'
+import AdminRestructureLoan from '@/pages/admin/RestructureLoan'
+import AdminCompanyAccounts from '@/pages/admin/CompanyAccounts'
+import AdminResetPassword   from '@/pages/admin/ResetPassword'
 
 // Agent
 import AgentDashboard      from '@/pages/agent/Dashboard'
