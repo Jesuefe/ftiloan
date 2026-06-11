@@ -120,8 +120,13 @@ export default function App() {
               <Route path="audit-logs"   element={<AdminAuditLogs/>}/>
               <Route path="kyc-test"     element={<AdminKycTest/>}/>
               <Route path="blacklist"    element={<AdminBlacklist/>}/>
-              <Route path="zones"        element={<AdminZones/>}/>
-              <Route path="settings"     element={<AdminSettings/>}/>
+              <Route path="zones"               element={<AdminZones/>}/>
+              <Route path="settings"            element={<AdminSettings/>}/>
+              <Route path="loans/:id/repayments" element={<AdminRepaymentHistory/>}/>
+              <Route path="loans/:id/restructure" element={<AdminRestructureLoan/>}/>
+              <Route path="salary"              element={<AdminSalary/>}/>
+              <Route path="company-accounts"    element={<AdminCompanyAccounts/>}/>
+              <Route path="reset-password"      element={<AdminResetPassword/>}/>
             </Route>
 
             {/* Agent */}

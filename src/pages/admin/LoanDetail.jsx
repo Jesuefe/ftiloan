@@ -93,6 +93,16 @@ export default function AdminLoanDetail() {
             <XCircle size={15}/> Reject
           </Button>
         )}
+        <Link to={`/admin/loans/${id}/repayments`}>
+          <Button variant="outline" className="gap-2"><RotateCcw size={15}/> Repayment History</Button>
+        </Link>
+        {['active','disbursed'].includes(loan.status) && (
+          <Link to={`/admin/loans/${id}/restructure`}>
+            <Button variant="outline" className="gap-2 text-amber-600 border-amber-300 hover:bg-amber-50">
+              <RotateCcw size={15}/> Restructure
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
