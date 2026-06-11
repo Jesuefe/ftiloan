@@ -24,7 +24,7 @@ export default function AdminLoanDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('loans')
-        .select(`*, users!loans_user_id_fkey(*), guarantors(*), repayment_schedule(*)`)
+        .select(`*, users!loans_user_id_fkey(*), guarantors(*), repayment_schedule(*), kyc_documents(*)`)
         .eq('id', id)
         .single()
       if (error) throw error
@@ -203,6 +203,36 @@ export default function AdminLoanDetail() {
                   </div>
                 ))}
               </div>
+            </CardBody>
+          </Card>
+
+          {/* KYC Documents */}
+          <Card>
+            <CardHeader>
+              <div className="font-bold text-sm">KYC Documents</div>
+              <span className="text-xs text-gray-500">{loan.kyc_documents?.length || 0} files</span>
+            </CardHeader>
+            <CardBody>
+              {loan.kyc_documents?.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {loan.kyc_documents.map(doc => (
+                    <a key={doc.id}
+                      href={`https://ftiloan.b-cdn.net/${doc.file_path}`}
+                      target="_blank" rel="noreferrer"
+                      className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg hover:border-brand-400 transition-all text-xs">
+                      <span className="text-lg">
+                        {doc.doc_type==='passport'?'🪪':doc.doc_type==='business_photo'?'🏪':doc.doc_type==='cac_document'?'📋':'📄'}
+                      </span>
+                      <div>
+                        <div className="font-semibold capitalize">{doc.doc_type?.replace(/_/g,' ')}</div>
+                        <div className="text-brand-600">View →</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-2">No documents</p>
+              )}
             </CardBody>
           </Card>
 
