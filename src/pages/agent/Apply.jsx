@@ -32,13 +32,41 @@ export default function AgentApply() {
   const { data: clients } = useQuery({
     queryKey: ['agent-clients-list', profile?.id],
     queryFn: async () => {
-      const { data: agent } = await supabase.from('agents').select('id').eq('user_id', profile.id).single()
+      const { data: agent } = await supabase.from('agents').select('id,zone_id').eq('user_id', profile.id).single()
       if (!agent) return []
+
+      // Get clients from loans
       const { data: loans } = await supabase.from('loans').select('user_id').eq('agent_id', agent.id)
-      const ids = [...new Set(loans?.map(l => l.user_id) || [])]
-      if (!ids.length) return []
-      const { data } = await supabase.from('users').select('id,first_name,last_name,phone').in('id', ids)
-      return data || []
+      const loanClientIds = new Set(loans?.map(l => l.user_id) || [])
+
+      // Get clients from same zone
+      let zoneClients = []
+      if (agent.zone_id) {
+        const { data: zc } = await supabase.from('users').select('id,first_name,last_name,phone')
+          .eq('role','client').eq('zone_id', agent.zone_id)
+        zoneClients = zc || []
+      } else {
+        // No zone — get all clients
+        const { data: ac } = await supabase.from('users').select('id,first_name,last_name,phone')
+          .eq('role','client').limit(100)
+        zoneClients = ac || []
+      }
+
+      // Merge both sources, deduplicate by id
+      const seen = new Set()
+      const all  = [...zoneClients]
+      all.forEach(c => seen.add(c.id))
+
+      // Add any loan clients not already in zone list
+      if (loanClientIds.size > 0) {
+        const missing = [...loanClientIds].filter(id => !seen.has(id))
+        if (missing.length) {
+          const { data: extra } = await supabase.from('users').select('id,first_name,last_name,phone').in('id', missing)
+          extra?.forEach(c => all.push(c))
+        }
+      }
+
+      return all
     },
     enabled: !!profile?.id,
   })
