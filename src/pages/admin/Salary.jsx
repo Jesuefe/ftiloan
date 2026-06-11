@@ -128,7 +128,7 @@ export default function AdminSalary() {
                   <td className="px-4 py-3 font-medium">{u.first_name} {u.last_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-brand-600">{u.staff_code||'—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-${roleColor(u.role)}-100 text-${roleColor(u.role)}-700 capitalize`}>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize">
                       {u.role?.replace(/_/g,' ')}
                     </span>
                   </td>

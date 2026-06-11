@@ -53,8 +53,8 @@ export default function AgentDashboard() {
           { label:'Pending Payments', value: stats?.pendingPayments||0, icon:CreditCard,  color:'amber',  to:'/agent/confirm-payments' },
         ].map(({ label,value,icon:Icon,color,to }) => (
           <Link key={label} to={to} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:border-brand-400 transition-colors">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 bg-${color}-50`}>
-              <Icon size={17} className={`text-${color}-600`}/>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3 bg-gray-100">
+              <Icon size={17} className="text-gray-600"/>
             </div>
             <div className="text-2xl font-bold font-display">{value}</div>
             <div className="text-xs text-gray-500 mt-1">{label}</div>
