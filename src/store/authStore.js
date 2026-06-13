@@ -2,8 +2,6 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { storageSet, storageGet, storageRemove } from '@/lib/storage'
 
-const SESSION_KEY = 'ftiloan_user'
-
 export const useAuthStore = create((set, get) => ({
   user:    null,
   profile: null,
@@ -12,31 +10,23 @@ export const useAuthStore = create((set, get) => ({
 
   init: async () => {
     try {
-      const user = await storageGet(SESSION_KEY)
+      const user = storageGet('ftiloan_user')
       if (user && user.id) {
-        // Set cached data immediately — prevents flash to login screen
-        set({ user, profile: user, loading: true })
+        // Restore session immediately — no network wait
+        set({ user, profile: user, loading: false })
 
-        // Refresh from DB in background
-        try {
-          const { data } = await supabase
-            .from('users').select('*').eq('id', user.id).single()
-
-          if (data && data.status === 'active') {
-            await storageSet(SESSION_KEY, data)
-            set({ user: data, profile: data, loading: false })
-          } else if (data && data.status !== 'active') {
-            // Suspended — force logout
-            await storageRemove(SESSION_KEY)
-            set({ user: null, profile: null, loading: false })
-          } else {
-            // Network error — use cached
-            set({ loading: false })
-          }
-        } catch(e) {
-          // Offline — use cached session
-          set({ loading: false })
-        }
+        // Refresh profile in background silently
+        supabase.from('users').select('*').eq('id', user.id).single()
+          .then(({ data }) => {
+            if (data && data.status === 'active') {
+              storageSet('ftiloan_user', data)
+              set({ user: data, profile: data })
+            } else if (data && data.status !== 'active') {
+              storageRemove('ftiloan_user')
+              set({ user: null, profile: null })
+            }
+          })
+          .catch(() => {}) // Ignore network errors — keep cached session
         return
       }
     } catch(e) {}
@@ -49,7 +39,7 @@ export const useAuthStore = create((set, get) => ({
         .from('users').select('*').eq('id', userId).single()
       if (data) {
         set({ user: data, profile: data })
-        await storageSet(SESSION_KEY, data)
+        storageSet('ftiloan_user', data)
       }
       return data
     } catch(e) { return null }
@@ -80,7 +70,7 @@ export const useAuthStore = create((set, get) => ({
         return { error: 'Your account is not active. Contact admin.' }
       }
 
-      await storageSet(SESSION_KEY, profile)
+      storageSet('ftiloan_user', profile)
       set({ user: profile, profile })
       return { user: profile }
 
@@ -90,7 +80,7 @@ export const useAuthStore = create((set, get) => ({
   },
 
   signOut: async () => {
-    await storageRemove(SESSION_KEY)
+    storageRemove('ftiloan_user')
     set({ user: null, profile: null })
   },
 

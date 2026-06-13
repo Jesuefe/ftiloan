@@ -1,57 +1,23 @@
-// Native-safe storage — uses Capacitor Preferences on device, localStorage on web
-let Preferences = null
+// Simple storage — localStorage works fine in Capacitor WebView
+// The previous issue was the init() timing, not storage itself
 
-async function getPreferences() {
-  if (Preferences) return Preferences
-  try {
-    if (window.Capacitor?.isNativePlatform()) {
-      const mod = await import('@capacitor/preferences')
-      Preferences = mod.Preferences
-    }
-  } catch(e) {}
-  return Preferences
-}
+const SESSION_KEY = 'ftiloan_user'
 
-export async function storageSet(key, value) {
+export function storageSet(key, value) {
   try {
-    const prefs = await getPreferences()
-    if (prefs) {
-      await prefs.set({ key, value: JSON.stringify(value) })
-    } else {
-      localStorage.setItem(key, JSON.stringify(value))
-    }
-  } catch(e) {
     localStorage.setItem(key, JSON.stringify(value))
-  }
+  } catch(e) {}
 }
 
-export async function storageGet(key) {
+export function storageGet(key) {
   try {
-    const prefs = await getPreferences()
-    if (prefs) {
-      const { value } = await prefs.get({ key })
-      return value ? JSON.parse(value) : null
-    } else {
-      const val = localStorage.getItem(key)
-      return val ? JSON.parse(val) : null
-    }
-  } catch(e) {
-    try {
-      const val = localStorage.getItem(key)
-      return val ? JSON.parse(val) : null
-    } catch { return null }
-  }
+    const val = localStorage.getItem(key)
+    return val ? JSON.parse(val) : null
+  } catch(e) { return null }
 }
 
-export async function storageRemove(key) {
+export function storageRemove(key) {
   try {
-    const prefs = await getPreferences()
-    if (prefs) {
-      await prefs.remove({ key })
-    } else {
-      localStorage.removeItem(key)
-    }
-  } catch(e) {
     localStorage.removeItem(key)
-  }
+  } catch(e) {}
 }
