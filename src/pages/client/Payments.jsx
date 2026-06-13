@@ -10,15 +10,19 @@ import { Alert } from '@/components/ui/Alert'
 import { Modal } from '@/components/ui/Modal'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { formatNaira, formatDate, formatDateTime } from '@/lib/utils'
-import { CreditCard, Upload, PlusCircle } from 'lucide-react'
+import { CreditCard, Upload, PlusCircle, Building2, Copy, Check } from 'lucide-react'
 
 export default function ClientPayments() {
   const { profile } = useAuthStore()
   const qc = useQueryClient()
-  const [modal, setModal] = useState(false)
-  const [flash, setFlash] = useState(null)
-  const [slip,  setSlip]  = useState(null)
-  const [form,  setForm]  = useState({ loan_id:'', amount:'', payment_method:'bank_transfer', payment_date: new Date().toISOString().slice(0,10) })
+  const [modal, setModal]   = useState(false)
+  const [flash, setFlash]   = useState(null)
+  const [slip,  setSlip]    = useState(null)
+  const [copied, setCopied] = useState(null)
+  const [form,  setForm]    = useState({
+    loan_id:'', amount:'', payment_method:'bank_transfer',
+    payment_date: new Date().toISOString().slice(0,10)
+  })
   const set = (k,v) => setForm(f => ({...f,[k]:v}))
 
   const { data: loans } = useQuery({
@@ -35,7 +39,7 @@ export default function ClientPayments() {
     queryKey: ['client-payments', profile?.id],
     queryFn: async () => {
       const { data } = await supabase.from('payments')
-        .select(`*, loans(loan_ref)`)
+        .select('*, loans(loan_ref)')
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
       return data || []
@@ -43,8 +47,23 @@ export default function ClientPayments() {
     enabled: !!profile?.id,
   })
 
+  // Company accounts for payment instructions
+  const { data: companyAccounts } = useQuery({
+    queryKey: ['company-accounts-active'],
+    queryFn: async () => {
+      const { data } = await supabase.from('company_accounts').select('*').eq('is_active', true)
+      return data || []
+    },
+  })
+
   const totalPaid = payments?.filter(p => p.status==='confirmed').reduce((s,p) => s+Number(p.actual_amount||p.amount),0) || 0
   const pending   = payments?.filter(p => p.status==='pending').length || 0
+
+  const copyAcct = (num) => {
+    navigator.clipboard.writeText(num)
+    setCopied(num)
+    setTimeout(() => setCopied(null), 2000)
+  }
 
   const submit = useMutation({
     mutationFn: async () => {
@@ -81,37 +100,64 @@ export default function ClientPayments() {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2"><CreditCard size={20} className="text-brand-600"/> My Payments</h1>
-          <p className="text-sm text-gray-500">{payments?.length || 0} payment records</p>
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <CreditCard size={20} className="text-brand-600"/> My Payments
+          </h1>
+          <p className="text-sm text-gray-500">{payments?.length || 0} records</p>
         </div>
-        <Button onClick={() => setModal(true)} className="gap-2"><PlusCircle size={15}/> Submit Payment</Button>
+        <Button onClick={() => setModal(true)} className="gap-1.5 text-sm px-3 py-2">
+          <PlusCircle size={14}/> Submit
+        </Button>
       </div>
 
       {flash && <Alert type={flash.type} className="mb-4">{flash.msg}</Alert>}
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-xl font-bold text-green-600">{formatNaira(totalPaid)}</div>
-          <div className="text-xs text-gray-500 mt-1">Total Confirmed</div>
+      {/* Stats — fixed layout, no overflow */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-3 text-center">
+          <div className="text-xs text-gray-400 mb-1">Confirmed</div>
+          <div className="text-sm font-bold text-green-600 leading-tight break-all">{formatNaira(totalPaid)}</div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <div className="bg-white rounded-2xl border border-gray-200 p-3 text-center">
+          <div className="text-xs text-gray-400 mb-1">Pending</div>
           <div className="text-xl font-bold text-amber-600">{pending}</div>
-          <div className="text-xs text-gray-500 mt-1">Pending</div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <div className="bg-white rounded-2xl border border-gray-200 p-3 text-center">
+          <div className="text-xs text-gray-400 mb-1">Total</div>
           <div className="text-xl font-bold text-gray-900">{payments?.length || 0}</div>
-          <div className="text-xs text-gray-500 mt-1">Total</div>
         </div>
       </div>
+
+      {/* Company pay-to accounts */}
+      {companyAccounts?.length > 0 && (
+        <div className="mb-4">
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Building2 size={12}/> Pay Into These Accounts
+          </div>
+          <div className="space-y-2">
+            {companyAccounts.map(a => (
+              <div key={a.id} className="bg-brand-50 border border-brand-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-brand-700 font-semibold">{a.bank_name}</div>
+                  <div className="font-mono text-base font-bold text-brand-900 mt-0.5">{a.account_number}</div>
+                  <div className="text-xs text-brand-600">{a.account_name}</div>
+                </div>
+                <button onClick={() => copyAcct(a.account_number)} className="p-2 rounded-lg hover:bg-brand-100 text-brand-600 transition-colors">
+                  {copied === a.account_number ? <Check size={16} className="text-green-600"/> : <Copy size={16}/>}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Payment list */}
       <div className="space-y-3">
         {isLoading && <div className="py-8 text-center text-gray-400">Loading…</div>}
         {payments?.map(p => (
-          <div key={p.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <div key={p.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
             <div className="flex items-start justify-between mb-2">
               <div>
                 <div className="font-bold text-lg text-gray-900">{formatNaira(p.amount)}</div>
@@ -135,20 +181,32 @@ export default function ClientPayments() {
               </a>
             )}
             {p.status === 'confirmed' && p.confirmed_at && (
-              <div className="mt-2 text-xs text-green-600">✓ Confirmed {formatDateTime(p.confirmed_at)}</div>
+              <div className="mt-2 text-xs text-green-600">Confirmed {formatDateTime(p.confirmed_at)}</div>
             )}
           </div>
         ))}
         {!isLoading && !payments?.length && (
-          <div className="py-16 text-center text-gray-400 bg-white rounded-xl border border-gray-200">
-            No payments yet.
-            <div className="mt-2"><Button onClick={() => setModal(true)} size="sm">Submit Payment</Button></div>
+          <div className="py-16 text-center bg-white rounded-2xl border border-gray-200">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background:"rgba(27,42,107,0.08)" }}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1B2A6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></div>
+            <div className="font-semibold text-gray-700 mb-1">No payments yet</div>
+            <p className="text-sm text-gray-400 mb-4">You need an active loan before you can make payments.</p>
+            <a href="/client/apply" className="inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-brand-700 transition-colors">
+              Apply for a Loan
+            </a>
           </div>
         )}
       </div>
 
       {/* Submit payment modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Submit Payment" size="md">
+        {companyAccounts?.length > 0 && (
+          <div className="mb-4 p-3 bg-brand-50 border border-brand-200 rounded-xl text-xs text-brand-700">
+            <div className="font-bold mb-1">Pay into:</div>
+            {companyAccounts.map(a => (
+              <div key={a.id}>{a.bank_name} — <span className="font-mono font-bold">{a.account_number}</span> ({a.account_name})</div>
+            ))}
+          </div>
+        )}
         <Select label="Select Loan *" value={form.loan_id} onChange={e => set('loan_id',e.target.value)}>
           <option value="">— Select loan —</option>
           {loans?.map(l => <option key={l.id} value={l.id}>{l.loan_ref} — Outstanding: {formatNaira(l.outstanding)}</option>)}
@@ -162,7 +220,7 @@ export default function ClientPayments() {
           <option value="pos">POS</option>
         </Select>
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Payment Slip / Receipt <span className="text-gray-400 font-normal">(optional)</span></label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Payment Slip <span className="text-gray-400 font-normal">(optional)</span></label>
           {slip ? (
             <div className="flex items-center gap-2 p-3 bg-brand-50 border border-brand-300 rounded-lg text-sm">
               <Upload size={14} className="text-brand-600"/>
@@ -172,7 +230,7 @@ export default function ClientPayments() {
           ) : (
             <label className="flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-400 transition-colors text-sm text-gray-500">
               <Upload size={16}/>
-              <span>Upload bank transfer screenshot / receipt</span>
+              <span>Upload bank screenshot / receipt</span>
               <input type="file" className="hidden" accept="image/*,application/pdf" onChange={e => setSlip(e.target.files?.[0]||null)}/>
             </label>
           )}

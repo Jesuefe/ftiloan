@@ -33,6 +33,7 @@ import AdminRepaymentHistory from '@/pages/admin/RepaymentHistory'
 import AdminSalary          from '@/pages/admin/Salary'
 import AdminRestructureLoan from '@/pages/admin/RestructureLoan'
 import AdminCompanyAccounts from '@/pages/admin/CompanyAccounts'
+import AdminNotifications   from '@/pages/admin/Notifications'
 import AdminResetPassword   from '@/pages/admin/ResetPassword'
 
 // Agent
@@ -45,6 +46,8 @@ import AgentConfirmPayments from '@/pages/agent/ConfirmPayments'
 import AgentVerify         from '@/pages/agent/Verify'
 import AgentReports        from '@/pages/agent/Reports'
 import AgentProfile        from '@/pages/agent/Profile'
+import AgentChat           from '@/pages/agent/Chat'
+import AgentClientDetail   from '@/pages/agent/ClientDetail'
 
 // Client
 import ClientDashboard  from '@/pages/client/Dashboard'
@@ -53,6 +56,8 @@ import ClientApplyAsset from '@/pages/client/ApplyAsset'
 import ClientLoans      from '@/pages/client/Loans'
 import ClientPayments   from '@/pages/client/Payments'
 import ClientSchedule   from '@/pages/client/Schedule'
+import ClientChat           from '@/pages/client/Chat'
+import ClientChangePassword  from '@/pages/client/ChangePassword'
 import ClientProfile    from '@/pages/client/Profile'
 
 // Manager
@@ -132,6 +137,7 @@ export default function App() {
               <Route path="loans/:id/restructure" element={<AdminRestructureLoan/>}/>
               <Route path="salary"              element={<AdminSalary/>}/>
               <Route path="company-accounts"    element={<AdminCompanyAccounts/>}/>
+              <Route path="notifications"         element={<AdminNotifications/>}/>
               <Route path="reset-password"      element={<AdminResetPassword/>}/>
             </Route>
 
@@ -150,6 +156,8 @@ export default function App() {
               <Route path="verify"            element={<AgentVerify/>}/>
               <Route path="reports"           element={<AgentReports/>}/>
               <Route path="profile"           element={<AgentProfile/>}/>
+              <Route path="chat"             element={<AgentChat/>}/>
+              <Route path="clients/:clientId" element={<AgentClientDetail/>}/>
             </Route>
 
             {/* Client */}
@@ -165,6 +173,8 @@ export default function App() {
               <Route path="payments"     element={<ClientPayments/>}/>
               <Route path="schedule"     element={<ClientSchedule/>}/>
               <Route path="profile"      element={<ClientProfile/>}/>
+              <Route path="chat"         element={<ClientChat/>}/>
+              <Route path="change-password" element={<ClientChangePassword/>}/>
             </Route>
 
             {/* Manager */}

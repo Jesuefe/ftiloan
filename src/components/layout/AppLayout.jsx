@@ -2,7 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { FTIWordmark } from '@/components/ui/FTILogo'
+import { isNative } from '@/lib/platform'
 import { Sidebar } from './Sidebar'
+import { BottomNav, BOTTOM_NAV_ROLES } from './BottomNav'
 import { useAuthStore } from '@/store/authStore'
 import { Bell, Menu, X, CheckCheck } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
@@ -75,6 +78,8 @@ export function AppLayout() {
   const { profile } = useAuthStore()
   const qc = useQueryClient()
 
+  const hasBottomNav = BOTTOM_NAV_ROLES.includes(profile?.role) || isNative()
+
   // Unread count
   const { data: unreadCount } = useQuery({
     queryKey: ['unread-count', profile?.id],
@@ -101,7 +106,6 @@ export function AppLayout() {
 
   const openNotif = () => {
     setNotifOpen(v => !v)
-    // Mark as read after viewing
     if (!notifOpen) {
       setTimeout(() => {
         supabase.from('notifications').update({ is_read: true })
@@ -113,15 +117,25 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)}/>
+      {/* Sidebar — on mobile only shown for roles without bottom nav */}
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} hasBottomNav={hasBottomNav}/>
 
       <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Topbar */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 lg:px-6 h-14 flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-600">
-            <Menu size={20}/>
-          </button>
+
+          {/* Hamburger: show on mobile only for non-bottom-nav roles; always on desktop for all roles via sidebar */}
+          {!hasBottomNav && (
+            <button onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-600">
+              <Menu size={20}/>
+            </button>
+          )}
+
+          {/* Logo text on mobile for bottom-nav roles (no hamburger, so show brand) */}
+          {hasBottomNav && (
+            <FTIWordmark className="lg:hidden"/>
+          )}
 
           <div className="flex-1 max-w-sm hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5">
             <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -145,17 +159,21 @@ export function AppLayout() {
               <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} profile={profile}/>
             </div>
 
-            <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold select-none">
+            <Link to={profile?.role === 'client' ? '/client/profile' : profile?.role === 'agent' ? '/agent/profile' : profile?.role === 'operator' ? '/operator/profile' : profile?.role === 'manager' ? '/manager/profile' : '#'}
+              className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold select-none hover:bg-brand-700 transition-colors cursor-pointer">
               {profile?.first_name?.[0]}{profile?.last_name?.[0]}
-            </div>
+            </Link>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6">
+        {/* Page content — add bottom padding on mobile when bottom nav is present */}
+        <main className={`flex-1 p-4 lg:p-6 ${hasBottomNav ? 'pb-20 lg:pb-6' : ''}`}>
           <Outlet/>
         </main>
       </div>
+
+      {/* Bottom navigation for mobile */}
+      <BottomNav/>
     </div>
   )
 }

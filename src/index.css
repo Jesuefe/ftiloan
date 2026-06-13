@@ -2,17 +2,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50:  #f0faf0;
-  --color-brand-100: #dcf5dc;
-  --color-brand-200: #bbecbb;
-  --color-brand-300: #87dc87;
-  --color-brand-400: #4BB543;
-  --color-brand-500: #3da436;
-  --color-brand-600: #2E7D32;
-  --color-brand-700: #1B5E20;
-  --color-brand-800: #145218;
-  --color-brand-900: #0d3810;
-  --color-dark:      #071007;
+  /* FTI Brand — navy + mint from logo */
+  --color-brand-50:  #e8fff7;
+  --color-brand-100: #c0ffe9;
+  --color-brand-200: #85ffcf;
+  --color-brand-300: #40f0ab;
+  --color-brand-400: #00D48F;
+  --color-brand-500: #00b87a;
+  --color-brand-600: #009864;
+  --color-brand-700: #007a50;
+  --color-brand-800: #005c3c;
+  --color-brand-900: #003d28;
+  --color-navy:      #1B2A6B;
+  --color-dark:      #0d1a40;
   --font-sans:       'DM Sans', system-ui, sans-serif;
   --font-display:    'DM Serif Display', Georgia, serif;
 }
@@ -39,13 +41,26 @@
 * { -webkit-tap-highlight-color: transparent; }
 button { touch-action: manipulation; }
 
-/* Bottom nav spacing on mobile */
-@media (max-width: 1024px) {
-  .lg\\:ml-64 { margin-left: 0 !important; }
-}
-
 /* Better scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* ── Safe area (iPhone notch / home bar) ───────────────────── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bottom nav height accounting for safe area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  nav.fixed.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent content from going behind iOS status bar */
+html {
+  -webkit-text-size-adjust: 100%;
+}

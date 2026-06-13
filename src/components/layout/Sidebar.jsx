@@ -1,37 +1,39 @@
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { FTIWordmark } from '@/components/ui/FTILogo'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, FileText, CreditCard, Settings,
   Shield, BarChart3, LogOut, Menu, X, UserCheck,
   Building2, AlertCircle, ClipboardList, Banknote,
-  Search, Bell, ChevronRight
+  Search, Bell, ChevronRight, MessageCircle
 } from 'lucide-react'
 
 const navByRole = {
   super_admin: [
-    { section: 'Overview' },
-    { label: 'Dashboard',      icon: LayoutDashboard, to: '/admin' },
-    { label: 'Loans',          icon: FileText,        to: '/admin/loans' },
-    { label: 'Clients',        icon: Users,           to: '/admin/clients' },
-    { label: 'Payments',       icon: CreditCard,      to: '/admin/payments' },
-    { section: 'Staff' },
-    { label: 'Agents',         icon: UserCheck,       to: '/admin/agents' },
-    { label: 'Managers',       icon: Users,           to: '/admin/managers' },
-    { label: 'Operators',      icon: Users,           to: '/admin/operators' },
-    { label: 'Auditors',       icon: ClipboardList,   to: '/admin/auditors' },
-    { section: 'System' },
-    { label: 'KYC & Credit',   icon: Search,          to: '/admin/kyc-test' },
-    { label: 'Blacklist',        icon: Shield,          to: '/admin/blacklist' },
-    { label: 'Audit Logs',       icon: BarChart3,       to: '/admin/audit-logs' },
+    { section: 'Main' },
+    { label: 'Dashboard',        icon: LayoutDashboard, to: '/admin' },
+    { label: 'Loans',            icon: FileText,        to: '/admin/loans' },
+    { label: 'Clients',          icon: Users,           to: '/admin/clients' },
+    { label: 'Payments',         icon: CreditCard,      to: '/admin/payments' },
     { label: 'Analytics',        icon: BarChart3,       to: '/admin/analytics' },
+    { section: 'Staff' },
+    { label: 'Agents',           icon: UserCheck,       to: '/admin/agents' },
+    { label: 'Managers',         icon: Users,           to: '/admin/managers' },
+    { label: 'Operators',        icon: Users,           to: '/admin/operators' },
+    { label: 'Auditors',         icon: ClipboardList,   to: '/admin/auditors' },
+    { label: 'Salary',           icon: Banknote,        to: '/admin/salary' },
     { section: 'Finance' },
     { label: 'Company Accounts', icon: Building2,       to: '/admin/company-accounts' },
-    { label: 'Salary',           icon: Banknote,        to: '/admin/salary' },
-    { label: 'Reset Password',   icon: Shield,          to: '/admin/reset-password' },
+    { label: 'Notifications',    icon: Bell,            to: '/admin/notifications' },
+    { section: 'Security' },
+    { label: 'KYC & Credit',     icon: Search,          to: '/admin/kyc-test' },
+    { label: 'Blacklist',        icon: Shield,          to: '/admin/blacklist' },
+    { label: 'Audit Logs',       icon: BarChart3,       to: '/admin/audit-logs' },
     { section: 'Config' },
     { label: 'Settings',         icon: Settings,        to: '/admin/settings' },
     { label: 'Zones',            icon: Building2,       to: '/admin/zones' },
+    { label: 'Reset Password',   icon: Shield,          to: '/admin/reset-password' },
   ],
   manager: [
     { section: 'Overview' },
@@ -53,6 +55,7 @@ const navByRole = {
     { section: 'Other' },
     { label: 'Verify Identity',icon: Shield,          to: '/agent/verify' },
     { label: 'Reports',        icon: BarChart3,       to: '/agent/reports' },
+    { label: 'Chat',           icon: MessageCircle,   to: '/agent/chat' },
     { label: 'Profile',        icon: Users,           to: '/agent/profile' },
   ],
   client: [
@@ -63,6 +66,7 @@ const navByRole = {
     { label: 'My Loans',       icon: FileText,        to: '/client/loans' },
     { label: 'Payments',       icon: CreditCard,      to: '/client/payments' },
     { label: 'Schedule',       icon: ClipboardList,   to: '/client/schedule' },
+    { label: 'Chat',           icon: MessageCircle,   to: '/client/chat' },
     { label: 'Profile',        icon: Users,           to: '/client/profile' },
   ],
   operator: [
@@ -91,7 +95,7 @@ const navByRole = {
   ],
 }
 
-export function Sidebar({ open, onClose }) {
+export function Sidebar({ open, onClose, hasBottomNav }) {
   const { profile, signOut } = useAuthStore()
   const nav = navByRole[profile?.role] || []
 
@@ -107,8 +111,9 @@ export function Sidebar({ open, onClose }) {
       )}>
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-          <div className="font-display text-xl font-bold text-white">
-            FTI<span className="text-brand-400">Loan</span>
+          <div className="py-0.5">
+
+          <FTIWordmark light/>
           </div>
           <button onClick={onClose} className="lg:hidden p-1 text-white/60 hover:text-white">
             <X size={18}/>

@@ -1,0 +1,21 @@
+{
+  "appId": "com.ftiloan.app",
+  "appName": "FTI Loan",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#ffffff",
+    "overrideUserAgent": "FTILoan-Android"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1B2A6B",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    }
+  }
+}

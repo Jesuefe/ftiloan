@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
@@ -6,10 +7,11 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
-import { User } from 'lucide-react'
+import { User, LogOut } from 'lucide-react'
 
 export default function Profile() {
-  const { profile, fetchProfile } = useAuthStore()
+  const { profile, fetchProfile, signOut } = useAuthStore()
+  const navigate = useNavigate()
   const [flash, setFlash] = useState(null)
   const [form, setForm]   = useState({
     first_name: profile?.first_name || '',
@@ -51,6 +53,13 @@ export default function Profile() {
           <Button loading={save.isPending} onClick={() => save.mutate()} className="w-full justify-center">Save Changes</Button>
         </CardBody>
       </Card>
+
+      <button
+        onClick={() => { signOut(); navigate('/login') }}
+        className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition-colors"
+      >
+        <LogOut size={16}/> Sign Out
+      </button>
     </div>
   )
 }

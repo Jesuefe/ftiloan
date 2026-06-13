@@ -8,7 +8,9 @@ import { Modal } from '@/components/ui/Modal'
 import { Alert } from '@/components/ui/Alert'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { formatNaira, formatDate, formatDateTime, loanStatusColor, loanStatusLabel } from '@/lib/utils'
-import { ArrowLeft, CheckCircle, XCircle, Banknote, RotateCcw, User, FileText } from 'lucide-react'
+import { ArrowLeft, CheckCircle, XCircle, Banknote, RotateCcw, User, FileText, Download } from 'lucide-react'
+import { generateLoanAgreement, downloadAgreement } from '@/lib/generateAgreement'
+import { generateRepaymentCard, downloadRepaymentCard } from '@/lib/generateRepaymentCard'
 
 export default function AdminLoanDetail() {
   const { id } = useParams()
@@ -18,6 +20,8 @@ export default function AdminLoanDetail() {
   const [reason, setReason] = useState('')
   const [notes, setNotes] = useState('')
   const [flash, setFlash] = useState(null)
+  const [genPdf, setGenPdf] = useState(false)
+  const [genCard, setGenCard] = useState(false)
 
   const { data: loan, isLoading } = useQuery({
     queryKey: ['loan', id],
@@ -50,6 +54,44 @@ export default function AdminLoanDetail() {
     },
     onError: (e) => setFlash({ type: 'danger', msg: e.message }),
   })
+
+  const handleDownloadCard = async () => {
+    setGenCard(true)
+    try {
+      const { data: settingsRaw } = await supabase.from('system_settings').select('*')
+      const settings = {}
+      settingsRaw?.forEach(r => { settings[r.setting_key] = r.setting_value })
+      const doc = await generateRepaymentCard({
+        loan,
+        client: loan.users,
+        settings,
+        stampDataUrl: settings.stamp_image_data || null,
+        scheduleRows: loan.repayment_schedule || [],
+      })
+      downloadRepaymentCard(doc, loan.loan_ref)
+    } catch(e) { setFlash({ type:'danger', msg: 'Card error: ' + e.message }) }
+    setGenCard(false)
+  }
+
+  const handleDownloadAgreement = async () => {
+    setGenPdf(true)
+    try {
+      const { data: settingsRaw } = await supabase.from('system_settings').select('*')
+      const settings = {}
+      settingsRaw?.forEach(r => { settings[r.setting_key] = r.setting_value })
+      const guarantor = loan.guarantors?.[0] || null
+      const doc = await generateLoanAgreement({
+        loan,
+        client: loan.users,
+        settings,
+        guarantor,
+        stampDataUrl: settings.stamp_image_data || null,
+        sigDataUrl:   settings.sig_image_data   || null,
+      })
+      downloadAgreement(doc, loan.loan_ref)
+    } catch(e) { setFlash({ type:'danger', msg: 'PDF error: ' + e.message }) }
+    setGenPdf(false)
+  }
 
   if (isLoading) return <div className="p-8 text-center text-gray-400">Loading…</div>
   if (!loan) return <div className="p-8 text-center text-gray-400">Loan not found</div>
@@ -93,6 +135,12 @@ export default function AdminLoanDetail() {
             <XCircle size={15}/> Reject
           </Button>
         )}
+        <Button onClick={handleDownloadAgreement} loading={genPdf} variant="outline" className="gap-2">
+          <Download size={15}/> Agreement PDF
+        </Button>
+        <Button onClick={handleDownloadCard} loading={genCard} variant="outline" className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50">
+          <Download size={15}/> Repayment Card
+        </Button>
         <Link to={`/admin/loans/${id}/repayments`}>
           <Button variant="outline" className="gap-2"><RotateCcw size={15}/> Repayment History</Button>
         </Link>

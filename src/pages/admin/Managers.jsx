@@ -37,7 +37,9 @@ export default function AdminManagers() {
       const count = users?.length || 0
       const staffCode = 'FTI-MGR-' + String(count+1).padStart(3,'0')
       const { error } = await supabase.from('users').insert({
-        first_name: form.first_name, last_name: form.last_name, email: form.email, phone: form.phone, password_hash: hashed, role: 'manager', status: 'active', staff_code: staffCode,
+        first_name: form.first_name, last_name: form.last_name,
+        email: form.email, phone: form.phone,
+        password_hash: hashed, role: 'manager', status: 'active', staff_code: staffCode,
       })
       if (error) throw error
     },
@@ -45,7 +47,7 @@ export default function AdminManagers() {
       qc.invalidateQueries({ queryKey: ['admin-managers'] })
       setModal(false)
       setForm({ first_name:'', last_name:'', email:'', phone:'', password:'' })
-      setFlash({ type:'success', msg:'Managers created.' })
+      setFlash({ type:'success', msg:'Manager created.' })
     },
     onError: e => setFlash({ type:'danger', msg: e.message }),
   })
@@ -59,7 +61,7 @@ export default function AdminManagers() {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Managers</h1>
           <p className="text-sm text-gray-500">{users?.length||0} managers</p>
@@ -71,14 +73,37 @@ export default function AdminManagers() {
 
       {flash && <Alert type={flash.type} className="mb-4">{flash.msg}</Alert>}
 
-      <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 mb-4 max-w-sm">
-        <Search size={15} className="text-gray-400"/>
+      <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-4">
+        <Search size={15} className="text-gray-400 flex-shrink-0"/>
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search managers…"
           className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400"/>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Mobile */}
+      <div className="space-y-2 lg:hidden">
+        {isLoading && <div className="py-8 text-center text-sm text-gray-400">Loading…</div>}
+        {users?.map(u => (
+          <div key={u.id} className="bg-white rounded-2xl border border-gray-200 px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="font-medium text-sm text-gray-900">{u.first_name} {u.last_name}</div>
+              <div className="text-xs text-gray-400">{u.email}</div>
+              <div className="font-mono text-xs text-brand-600 mt-0.5">{u.staff_code || '—'}</div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Badge color={u.status==='active'?'green':'red'}>{u.status}</Badge>
+              <Button size="sm" variant="outline"
+                onClick={() => toggleStatus.mutate({ id:u.id, status:u.status })}>
+                {u.status==='active'?'Suspend':'Activate'}
+              </Button>
+            </div>
+          </div>
+        ))}
+        {!isLoading && !users?.length && <div className="py-12 text-center text-sm text-gray-400 bg-white rounded-2xl border border-gray-200">No managers yet</div>}
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead><tr className="bg-gray-50 border-b border-gray-200">
             {['Name','Staff Code','Phone','Status','Joined',''].map(h => (
@@ -89,27 +114,19 @@ export default function AdminManagers() {
             {isLoading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading…</td></tr>}
             {users?.map(u => (
               <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <div className="font-medium">{u.first_name} {u.last_name}</div>
-                  <div className="text-xs text-gray-400">{u.email}</div>
-                </td>
+                <td className="px-4 py-3"><div className="font-medium">{u.first_name} {u.last_name}</div><div className="text-xs text-gray-400">{u.email}</div></td>
                 <td className="px-4 py-3 font-mono text-xs text-brand-600">{u.staff_code || '—'}</td>
                 <td className="px-4 py-3 text-gray-600">{u.phone || '—'}</td>
-                <td className="px-4 py-3">
-                  <Badge color={u.status==='active'?'green':'red'}>{u.status}</Badge>
-                </td>
+                <td className="px-4 py-3"><Badge color={u.status==='active'?'green':'red'}>{u.status}</Badge></td>
                 <td className="px-4 py-3 text-xs text-gray-500">{formatDate(u.created_at)}</td>
                 <td className="px-4 py-3">
-                  <Button size="sm" variant="outline"
-                    onClick={() => toggleStatus.mutate({ id:u.id, status:u.status })}>
+                  <Button size="sm" variant="outline" onClick={() => toggleStatus.mutate({ id:u.id, status:u.status })}>
                     {u.status==='active'?'Suspend':'Activate'}
                   </Button>
                 </td>
               </tr>
             ))}
-            {!isLoading && !users?.length && (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">No managers yet.</td></tr>
-            )}
+            {!isLoading && !users?.length && <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">No managers yet.</td></tr>}
           </tbody>
         </table>
       </div>

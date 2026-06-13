@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/utils'
-import { Search, UserPlus } from 'lucide-react'
+import { Search, UserPlus, ChevronRight } from 'lucide-react'
 
 export default function AgentClients() {
   const { profile } = useAuthStore()
@@ -95,7 +95,7 @@ export default function AgentClients() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading && <div className="col-span-3 py-8 text-center text-gray-400">Loading…</div>}
         {clients?.map(c => (
-          <div key={c.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+          <Link key={c.id} to={`/agent/clients/${c.id}`} className="block bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-brand-400 hover:shadow-md transition-all">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold flex-shrink-0">
                 {c.first_name?.[0]}{c.last_name?.[0]}
@@ -109,15 +109,11 @@ export default function AgentClients() {
               </Badge>
             </div>
             <div className="text-xs text-gray-400 mb-3">Joined {formatDate(c.created_at)}</div>
-            <div className="flex gap-2">
-              <Link to={`/agent/apply?client_id=${c.id}`} className="flex-1">
-                <Button variant="outline" size="sm" className="w-full justify-center">Apply Loan</Button>
-              </Link>
-              <Link to={`/agent/verify?prefill=${c.bvn_number || ''}`}>
-                <Button variant="ghost" size="sm">Verify</Button>
-              </Link>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
+              <span className="text-xs text-gray-400">Tap to view loans & record payments</span>
+              <ChevronRight size={14} className="text-gray-400"/>
             </div>
-          </div>
+          </Link>
         ))}
         {!isLoading && !clients?.length && (
           <div className="col-span-3 py-12 text-center text-gray-400 bg-white rounded-xl border border-gray-200">
