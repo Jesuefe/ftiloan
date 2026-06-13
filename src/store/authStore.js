@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { storageSet, storageGet, storageRemove } from '@/lib/storage'
+
+const SESSION_KEY = 'ftiloan_user'
 
 export const useAuthStore = create((set, get) => ({
   user:    null,
@@ -9,55 +12,52 @@ export const useAuthStore = create((set, get) => ({
 
   init: async () => {
     try {
-      const stored = localStorage.getItem('ftiloan_user')
-      if (stored) {
-        const user = JSON.parse(stored)
-        // Set immediately so app doesn't flash to login
+      const user = await storageGet(SESSION_KEY)
+      if (user && user.id) {
+        // Set cached data immediately — prevents flash to login screen
         set({ user, profile: user, loading: true })
-        // Refresh from DB in background to get latest data
+
+        // Refresh from DB in background
         try {
-          const { data } = await supabase.from('users').select('*').eq('id', user.id).single()
+          const { data } = await supabase
+            .from('users').select('*').eq('id', user.id).single()
+
           if (data && data.status === 'active') {
-            localStorage.setItem('ftiloan_user', JSON.stringify(data))
+            await storageSet(SESSION_KEY, data)
             set({ user: data, profile: data, loading: false })
           } else if (data && data.status !== 'active') {
-            // Account suspended
-            localStorage.removeItem('ftiloan_user')
+            // Suspended — force logout
+            await storageRemove(SESSION_KEY)
             set({ user: null, profile: null, loading: false })
           } else {
+            // Network error — use cached
             set({ loading: false })
           }
         } catch(e) {
-          // Network error — use cached data
+          // Offline — use cached session
           set({ loading: false })
         }
         return
       }
-    } catch (e) {}
+    } catch(e) {}
     set({ loading: false })
   },
 
   fetchProfile: async (userId) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      const { data } = await supabase
+        .from('users').select('*').eq('id', userId).single()
       if (data) {
         set({ user: data, profile: data })
-        localStorage.setItem('ftiloan_user', JSON.stringify(data))
+        await storageSet(SESSION_KEY, data)
       }
       return data
-    } catch (e) {
-      return null
-    }
+    } catch(e) { return null }
   },
 
   signIn: async (email, password) => {
     set({ error: null })
     try {
-      // Use Supabase RPC to verify password
       const { data, error } = await supabase.rpc('verify_user_password', {
         p_email:    email.trim().toLowerCase(),
         p_password: password,
@@ -69,12 +69,8 @@ export const useAuthStore = create((set, get) => ({
 
       const userId = data[0].user_id
 
-      // Fetch full profile
       const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single()
+        .from('users').select('*').eq('id', userId).single()
 
       if (profileError || !profile) {
         return { error: 'Could not load user profile' }
@@ -84,17 +80,17 @@ export const useAuthStore = create((set, get) => ({
         return { error: 'Your account is not active. Contact admin.' }
       }
 
-      localStorage.setItem('ftiloan_user', JSON.stringify(profile))
+      await storageSet(SESSION_KEY, profile)
       set({ user: profile, profile })
       return { user: profile }
 
-    } catch (e) {
+    } catch(e) {
       return { error: 'Login failed. Please try again.' }
     }
   },
 
   signOut: async () => {
-    localStorage.removeItem('ftiloan_user')
+    await storageRemove(SESSION_KEY)
     set({ user: null, profile: null })
   },
 
