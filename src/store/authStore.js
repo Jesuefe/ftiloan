@@ -9,11 +9,28 @@ export const useAuthStore = create((set, get) => ({
 
   init: async () => {
     try {
-      // Check for existing session in localStorage
       const stored = localStorage.getItem('ftiloan_user')
       if (stored) {
         const user = JSON.parse(stored)
-        set({ user, profile: user, loading: false })
+        // Set immediately so app doesn't flash to login
+        set({ user, profile: user, loading: true })
+        // Refresh from DB in background to get latest data
+        try {
+          const { data } = await supabase.from('users').select('*').eq('id', user.id).single()
+          if (data && data.status === 'active') {
+            localStorage.setItem('ftiloan_user', JSON.stringify(data))
+            set({ user: data, profile: data, loading: false })
+          } else if (data && data.status !== 'active') {
+            // Account suspended
+            localStorage.removeItem('ftiloan_user')
+            set({ user: null, profile: null, loading: false })
+          } else {
+            set({ loading: false })
+          }
+        } catch(e) {
+          // Network error — use cached data
+          set({ loading: false })
+        }
         return
       }
     } catch (e) {}
